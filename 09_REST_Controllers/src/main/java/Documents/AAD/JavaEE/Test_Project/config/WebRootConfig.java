@@ -1,0 +1,5 @@
+package Documents.AAD.JavaEE.Test_Project.config;
+
+public class WebRootConfig {
+
+}
