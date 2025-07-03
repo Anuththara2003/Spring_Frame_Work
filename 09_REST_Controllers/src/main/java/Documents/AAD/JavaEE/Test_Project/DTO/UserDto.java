@@ -4,16 +4,7 @@ public class UserDto {
     private String id;
     private String name;
     private String address;
-
-    public UserDto(String id, String name, String address) {
-        this.id = id;
-        this.name = name;
-        this.address = address;
-    }
-
-    public UserDto() {
-
-    }
+    private CityDto cityDto;
 
     @Override
     public String toString() {
@@ -21,7 +12,19 @@ public class UserDto {
                 "id='" + id + '\'' +
                 ", name='" + name + '\'' +
                 ", address='" + address + '\'' +
+                ", cityDto=" + cityDto +
                 '}';
+    }
+
+    public UserDto(String id, String address, String name, CityDto cityDto) {
+        this.id = id;
+        this.address = address;
+        this.name = name;
+        this.cityDto = cityDto;
+    }
+
+    public UserDto() {
+
     }
 
     public String getId() {
@@ -46,5 +49,13 @@ public class UserDto {
 
     public void setAddress(String address) {
         this.address = address;
+    }
+
+    public CityDto getCityDto() {
+        return cityDto;
+    }
+
+    public void setCityDto(CityDto cityDto) {
+        this.cityDto = cityDto;
     }
 }
