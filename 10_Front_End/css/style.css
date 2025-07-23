@@ -15,3 +15,26 @@ body {
 .badge-status {
     min-width: 80px;
 }
+
+#searchResults {
+    position: absolute;
+    z-index: 1000; /* Keep above table */
+    top: 100%;
+    left: 0;
+    right: 0;
+    background-color: white;
+    border: 1px solid #dee2e6;
+    max-height: 250px;
+    overflow-y: auto;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    border-radius: 0 0 5px 5px;
+}
+
+#searchResults li {
+    padding: 10px;
+    cursor: pointer;
+}
+
+#searchResults li:hover {
+    background-color: #f1f1f1;
+}

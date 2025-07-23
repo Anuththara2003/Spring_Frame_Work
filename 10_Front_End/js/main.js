@@ -1,18 +1,19 @@
 let id;
 let status;
 
-let jobs = [];
-let currentPage = 1;
-const pageSize = 5;
 
-function renderTable(pageData) {
+let currentPage = 0;
+const pageSize = 5;
+let totalPages = 0;
+
+function renderTable(jobs) {
     let tbody = $("#jobsTableBody");
     tbody.empty();
 
-    if (pageData.length === 0) {
+    if (jobs.length === 0) {
         tbody.append(`<tr><td colspan="7" class="text-center">No results found</td></tr>`);
     } else {
-        $.each(pageData, function (index, job) {
+        $.each(jobs, function (index, job) {
             let row = `
                 <tr>
                     <td>${job.id}</td>
@@ -35,50 +36,71 @@ function renderTable(pageData) {
     }
 }
 
-function updateTable() {
-    const startIndex = (currentPage - 1) * pageSize;
-    const pageData = jobs.slice(startIndex, startIndex + pageSize);
-    renderTable(pageData);
-    $("#currentPage").text(`Page ${currentPage}`);
-}
-
-function loadJobs() {
+function loadJobs(page = 0) {
     $.ajax({
-        url: "http://localhost:8080/api/v1/job/get",
+        url: `http://localhost:8080/api/v1/job/get?page=${page}&size=${pageSize}`,
         method: "GET",
-        success: function (data) {
-            jobs = data;
-            currentPage = 1;
-            updateTable();
+            success: function (data) {
+            renderTable(data.content);
+            currentPage = data.number;
+            totalPages = data.totalPages;
+            updatePaginationDisplay();
         },
         error: function () {
             alert("Failed to load jobs.");
         }
-
     });
 }
+
+function updatePaginationDisplay() {
+    $("#currentPage").text(`Page ${currentPage + 1} of ${totalPages}`);
+    $("#prevPage").prop("disabled", currentPage === 0);
+    $("#nextPage").prop("disabled", currentPage + 1 >= totalPages);
+}
+
+function nextPage() {
+    if (currentPage + 1 < totalPages) {
+        loadJobs(currentPage + 1);
+    }
+}
+
+function prevPage() {
+    if (currentPage > 0) {
+        loadJobs(currentPage - 1);
+    }
+}
+
+$(document).ready(function () {
+    loadJobs();
+
+    $("#prevPage").click(prevPage);
+    $("#nextPage").click(nextPage);
+});
+
 
 $("#searchInput").keyup(function () {
     let keyword = $(this).val().trim();
 
-    // Clear previous suggestions
     $("#searchResults").empty();
 
     if (keyword.length === 0) {
-        $("#searchResults").hide(); // Hide suggestions
-        loadJobs(); // Load all jobs if input is empty
+        $("#searchResults").hide();
+        loadJobs();
         return;
     }
 
+    // Send search request
     $.ajax({
         url: "http://localhost:8080/api/v1/job/search/" + keyword,
         method: "GET",
         success: function (data) {
-            jobs = data;
-            currentPage = 1;
-            updateTable();
 
-            // Add suggestions to the dropdown
+            renderTable(data);
+
+            $("#currentPage").text("Search results");
+            $("#prevPage").prop("disabled", true);
+            $("#nextPage").prop("disabled", true);
+
             if (data.length > 0) {
                 data.forEach(function (job) {
                     let suggestionItem = `<li class="list-group-item list-group-item-action">${job.jobTitle}</li>`;
@@ -90,39 +112,39 @@ $("#searchInput").keyup(function () {
             }
         },
         error: function () {
-            $("#jobsTableBody").empty();
-            $("#jobsTableBody").append(`<tr><td colspan="7" class="text-center">Error loading results</td></tr>`);
+            $("#jobsTableBody").empty().append(`
+                <tr><td colspan="7" class="text-center">Error loading results</td></tr>`);
             $("#searchResults").hide();
         }
     });
 });
 
-// Handle click on a suggestion item
 $("#searchResults").on("click", "li", function () {
-    $("#searchInput").val($(this).text());
+    let selectedText = $(this).text();
+    $("#searchInput").val(selectedText);
     $("#searchResults").hide();
+
+    $.ajax({
+        url: "http://localhost:8080/api/v1/job/search/" + selectedText,
+        method: "GET",
+        success: function (data) {
+            renderTable(data);
+            $("#currentPage").text("Search results");
+            $("#prevPage").prop("disabled", true);
+            $("#nextPage").prop("disabled", true);
+        },
+        error: function () {
+            $("#jobsTableBody").empty().append(`
+                <tr><td colspan="7" class="text-center">Error loading results</td></tr>`);
+        }
+    });
 });
 
 
-$("#prevPage").click(function () {
-    if (currentPage > 1) {
-        currentPage--;
-        updateTable();
-    }
-});
-
-$("#nextPage").click(function () {
-    const maxPage = Math.ceil(jobs.length / pageSize);
-    if (currentPage < maxPage) {
-        currentPage++;
-        updateTable();
-    }
-});
 
 $(document).ready(function () {
     loadJobs();
 });
-
 
 function deleteJob(jobId) {
     $.ajax({
@@ -132,7 +154,7 @@ function deleteJob(jobId) {
             alert("Job deleted successfully!");
             loadJobs();
         },
-        error: function(error) {
+        error: function (error) {
             console.error('Error deleting job:', error);
         }
     });
@@ -146,16 +168,14 @@ function editStatus(jobId) {
             alert("Job status updated successfully!");
             loadJobs();
         },
-        error: function(error) {
+        error: function (error) {
             console.error('Error updating job status:', error);
         }
-
-    })
+    });
 }
 
 function getSelectRow(jobId, callback) {
-
-    id = jobId
+    id = jobId;
 
     $.ajax({
         url: "http://localhost:8080/api/v1/job/row/" + jobId,
@@ -171,21 +191,19 @@ function getSelectRow(jobId, callback) {
 }
 
 function editJob(jobId) {
-    getSelectRow(jobId, function(row) {
+    getSelectRow(jobId, function (row) {
         if (row) {
             $('#editJobTitle').val(row.jobTitle);
             $('#editCompanyName').val(row.company);
             $('#editJobLocation').val(row.location);
             $('#editJobType').val(row.type);
             $('#editJobDescription').val(row.jobDescription);
-            status = row.status
+            status = row.status;
         }
     });
 }
 
-
 $("#updateJobBtn").click(function () {
-
     var jobId = id;
 
     let jobTitle = $("#editJobTitle").val();
@@ -193,12 +211,6 @@ $("#updateJobBtn").click(function () {
     let jobLocation = $("#editJobLocation").val();
     let jobType = $("#editJobType").val();
     let description = $("#editJobDescription").val();
-
-    console.log(jobId)
-    console.log(jobTitle);
-    console.log(companyName);
-    console.log(jobLocation);
-    console.log(jobType);
 
     let job = {
         id: jobId,
@@ -208,7 +220,7 @@ $("#updateJobBtn").click(function () {
         type: jobType,
         jobDescription: description,
         status: status
-    }
+    };
 
     $.ajax({
         url: "http://localhost:8080/api/v1/job/update/" + jobId,
@@ -219,14 +231,12 @@ $("#updateJobBtn").click(function () {
             alert("Job updated successfully!");
             loadJobs();
         },
-        error: function(error) {
+        error: function (error) {
             console.error('Error updating job:', error);
         }
     });
-
 });
 
-// save job
 $("#saveJobBtn").click(function () {
     let jobTitle = $("#jobTitle").val();
     let companyName = $("#companyName").val();
@@ -253,10 +263,8 @@ $("#saveJobBtn").click(function () {
             alert("Job added successfully!");
             location.reload();
         },
-        error: function(error) {
+        error: function (error) {
             console.error('Error saving job:', error);
-            // Optionally, show an error message to the user
         }
     });
 });
-

@@ -17,8 +17,12 @@
                     + Add Job
                 </button>
             </div>
-            <div class="mb-3">
-                <input type="text" id="searchInput" class="form-control" placeholder="Search jobs...">
+<!--            <div class="mb-3">-->
+<!--                <input type="text" id="searchInput" class="form-control" placeholder="Search jobs...">-->
+<!--            </div>-->
+            <div class="mb-3 position-relative">
+                <input type="text" id="searchInput" class="form-control" placeholder="Search jobs..." autocomplete="off">
+                <div id="searchResults" class="list-group position-absolute w-100" style="z-index: 1000;"></div>
             </div>
             <div class="table-responsive">
                 <table class="table table-striped table-hover">

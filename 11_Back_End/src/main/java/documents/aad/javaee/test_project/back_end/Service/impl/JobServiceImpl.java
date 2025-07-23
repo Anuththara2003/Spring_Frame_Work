@@ -7,6 +7,8 @@ import documents.aad.javaee.test_project.back_end.Service.JobService;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.modelmapper.TypeToken;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -31,12 +33,7 @@ public class JobServiceImpl implements JobService {
         }
     }
 
-    @Override
-    public List<JobDto> getAllJobs() {
-       List<Job> jobs = jobRepository.findAll();
-//       return jobs.stream().map(job -> modelMapper.map(job, JobDto.class)).toList();
-        return modelMapper.map(jobs,new TypeToken<List<JobDto>>(){}.getType());
-    }
+
 
     @Override
     public void deleteJob(Integer id) {
@@ -63,6 +60,13 @@ public class JobServiceImpl implements JobService {
         int integerId = Integer.parseInt(id);
         Optional<Job> job = jobRepository.findById(integerId);
         return modelMapper.map(job.get(), JobDto.class);
+    }
+
+    @Override
+    public Page<JobDto> getJob(Pageable pageable) {
+       Page<Job> jobPage = jobRepository.findAll(pageable);
+        return jobPage.map(job -> modelMapper.map(job, JobDto.class));
+
     }
 
 }
