@@ -21,10 +21,13 @@ function renderTable(jobs) {
                     <td>${job.company}</td>
                     <td>${job.location}</td>
                     <td>${job.type}</td>
-                    <td>
-                        ${job.status}
-                        <button class="btn btn-warning" onclick="editStatus(${job.id})">Deactivate</button>
-                    </td>
+                   <td>
+    ${job.status}
+    <button class="btn btn-warning" onclick="editStatus(${job.id})">
+        ${job.status === 'Active' ? 'Deactivate' : 'Activate'}
+    </button>
+</td>
+
                     <td>
                         <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#editJobModal" onclick="editJob(${job.id})">Edit</button>
                         <button class="btn btn-danger" onclick="deleteJob(${job.id})">Delete</button>
@@ -35,15 +38,14 @@ function renderTable(jobs) {
         });
     }
 }
-
 function loadJobs(page = 0) {
     $.ajax({
-        url: `http://localhost:8080/api/v1/job/get?page=${page}&size=${pageSize}`,
+        url: `http://localhost:8080/api/v1/job/get`,
         method: "GET",
-            success: function (data) {
-            renderTable(data.content);
-            currentPage = data.number;
-            totalPages = data.totalPages;
+        success: function (data) {
+            renderTable(data.data); // <-- FIXED
+            currentPage = 0;
+            totalPages = 1;
             updatePaginationDisplay();
         },
         error: function () {
@@ -51,6 +53,7 @@ function loadJobs(page = 0) {
         }
     });
 }
+
 
 function updatePaginationDisplay() {
     $("#currentPage").text(`Page ${currentPage + 1} of ${totalPages}`);
